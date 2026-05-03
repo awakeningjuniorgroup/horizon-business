@@ -42,7 +42,7 @@ const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
 const httpServer = createServer(app);
 
 const allowedOrigins = [
-  process.env.CLIENT_URL,
+  process.env.VITE_BACKEND_URL,
   process.env.FRONTEND_URL,
   "http://localhost:5173"
 ].filter(Boolean);
