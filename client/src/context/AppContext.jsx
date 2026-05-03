@@ -22,7 +22,7 @@ export const AppContextProvider = ({ children }) => {
   const navigate = useNavigate();
   const backendUrl =
     import.meta.env.VITE_BACKEND_URL ||
-     "https://kuakumarket-backend.onrender.com";
+     "https://horizon-business.onrender.com";
   const { isSignedIn, user: clerkUser, isLoaded: clerkLoaded } = useUser();
   const { signOut: clerkSignOut } = useClerk();
 

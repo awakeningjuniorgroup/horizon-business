@@ -54,7 +54,8 @@ const io = isVercel
       cors: {
         origin: allowedOrigins,
         credentials: true,
-        methods: ["GET", "POST"]
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true
       }
     });
 
