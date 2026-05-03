@@ -73,7 +73,7 @@ const BestSeller = () => {
                 >
                     <p>Meilleurs produits quotidien.</p>
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-md">
-                        <RefreshCw size={12} className="text-gray-500" /> Auto rotation du catalogue
+                        <RefreshCw size={12} className="text-gray-500" /> Auto-rotation du catalogue
                     </span>
                 </motion.div>
             </div>
