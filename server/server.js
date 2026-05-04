@@ -55,7 +55,8 @@ app.use(cors({
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+  // 🟢 AJOUT : "token" doit être ici pour autoriser ton header personnalisé
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "token"]
 }));
 
 // ==========================================
