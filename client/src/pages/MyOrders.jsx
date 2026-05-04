@@ -435,10 +435,10 @@ const MyOrders = () => {
                 <div class="header">
                     <div class="brand">
                         <div class="brand-icon">
-                            <img src="${window.location.origin}/favicon.png" alt="Kuaku Market Logo" />
+                            <img src="${window.location.origin}/favicon.png" alt="Horizon Business Logo" />
                         </div>
                         <div class="brand-info">
-                            <h1>Kuaku Market</h1>
+                            <h1>Horizon Business</h1>
                             <p>Multi-Vendor Grocery Store</p>
                         </div>
                     </div>

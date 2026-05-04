@@ -137,7 +137,7 @@ const ZoomIntro = () => {
         className="absolute inset-0 z-0 bg-cover bg-center opacity-50 will-change-transform"
         style={{
           backgroundImage:
-            "url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2574&auto=format&fit=crop')",
+            "url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop')",
         }}
       />
 
@@ -155,9 +155,9 @@ const ZoomIntro = () => {
         {/* Logo */}
         <div ref={logoRef} className="will-change-transform">
           <h1 className="text-white text-6xl md:text-8xl font-black drop-shadow-2xl tracking-tighter">
-            KUAKU
-            <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#f26691]  to-[#f26691]  drop-shadow-[0_0_20px_rgba(34,197,94,0.4)]">
-              MARKET
+            HORIZON
+            <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#4A76AC]  to-[#3d618c] drop-shadow-[0_0_20px_rgba(34,197,94,0.4)]">
+              BUSINESS
             </span>
           </h1>
         </div>
@@ -170,7 +170,7 @@ const ZoomIntro = () => {
 
             <Sparkles size={16} className="text-[#3d618c] animate-pulse" />
             <p className="text-slate-200 text-sm md:text-base font-medium tracking-wide">
-              Welcome. Freshness awaits.
+              Bienvenue chez Horizon Business l'excellence à votre portée.
             </p>
           </div>
         </div>
@@ -187,7 +187,7 @@ const ZoomIntro = () => {
         onClick={completeIntro}
         className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 text-slate-500 hover:text-white text-[10px] font-bold tracking-[0.2em] uppercase transition-colors cursor-pointer pb-1 border-b border-transparent hover:border-white"
       >
-        Skip Intro
+        Passer l'introduction
       </button>
 
       {/* Add Shimmer Animation to Tailwind locally if not in config */}

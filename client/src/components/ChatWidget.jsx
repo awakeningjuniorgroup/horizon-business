@@ -91,7 +91,7 @@ const ChatWidget = () => {
                 <Bot size={20} />
                 <div>
                   <h3 className="font-bold text-sm leading-tight">
-                    Kuaku Market Support
+                    Horizon business Support
                   </h3>
                   <p className="text-[10px] text-green-100 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse"></span>{" "}
