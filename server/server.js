@@ -42,6 +42,7 @@ const PORT = process.env.PORT || 4000;
 const allowedOrigins = [
   "http://localhost:5173", 
   "https://horizon-business.vercel.app", 
+  "https://horizon-business-1.onrender.com",
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
