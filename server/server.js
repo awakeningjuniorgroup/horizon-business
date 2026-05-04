@@ -1,10 +1,14 @@
+ 
+
+
+
 import "dotenv/config"; 
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
 
-// Imports pour Real-Time WebSockets
+// 🟢 NEW: Imports for Real-Time WebSockets
 import { createServer } from "http";
 import { Server } from "socket.io";
 
@@ -12,6 +16,7 @@ import { Server } from "socket.io";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
+// 🟢 REMOVED: express-rate-limit has been removed to allow unlimited requests
 
 // Import Configs
 import connectCloudinary from "./configs/cloudinary.js"; 
@@ -37,108 +42,136 @@ import { checkMaintenance } from "./middlewares/authRole.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
 
+// 🟢 Create HTTP Server and bind Socket.io to it
 const httpServer = createServer(app);
 
+// 🟢 FIX: Added your Vercel frontend URL to the allowed origins!
 const allowedOrigins = [
-  process.env.VITE_BACKEND_URL,
-  process.env.FRONTEND_URL,
-  "http://localhost:5173",
-  "https://horizon-business-1.onrender.com/",
-  "https://horizon-business.vercel.app"
+  "http://localhost:5173", 
+  "https://horizon-business.vercel.app", 
+  process.env.FRONTEND_URL
 ].filter(Boolean);
 
-// Configuration Socket.io (Désactivé sur Vercel car non supporté en Serverless)
-const io = isVercel
-  ? null
-  : new Server(httpServer, {
-      cors: {
-        origin: allowedOrigins,
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        credentials: true
-      }
-    });
+const io = new Server(httpServer, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST"]
+  }
+});
 
-if (io) {
-  io.on("connection", (socket) => {
-    console.log(`🔌 Connection: ${socket.id}`);
-    socket.on("join_order", (orderId) => socket.join(orderId));
-    socket.on("disconnect", () => console.log("🔌 Disconnected"));
-  });
-}
-
+// 🟢 Attach IO to app so controllers can trigger real-time Admin events
 app.set("io", io);
 
-// --- MIDDLEWARES GLOBAUX ---
-app.use(helmet()); 
-app.use(compression()); 
-if (process.env.NODE_ENV !== 'production') {
-    app.use(morgan('dev')); 
-}
+// ==========================================
+// 🚀 REAL-TIME TRACKING ENGINE (SOCKET.IO)
+// ==========================================
+io.on("connection", (socket) => {
+    console.log(`🔌 Live Connection Established: ${socket.id}`);
 
-app.use(cors({
-  origin: allowedOrigins, 
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-}));
+    // 1. Both Customer & Rider join a private "Order Room"
+    socket.on("join_order", (orderId) => {
+        socket.join(orderId);
+        console.log(`📦 User joined Tracking Room: ${orderId}`);
+    });
 
-// Webhook avant le body parser
-app.use("/api/webhooks", webhookRouter); 
+    // 2. Rider broadcasts their live GPS coordinates
+    socket.on("rider_location_update", (data) => {
+        socket.to(data.orderId).emit("live_location", data);
+    });
 
-app.use(express.json({ limit: '2mb' })); 
-app.use(express.urlencoded({ extended: true, limit: '2mb' }));
-app.use(cookieParser());
-app.use(checkMaintenance);
+    // 3. Register global user for generic notifications (Seller/User)
+    socket.on("register_user", (userId) => {
+        if (userId) {
+            socket.join(userId);
+            console.log(`👤 User joined Global Notification Room: ${userId}`);
+        }
+    });
 
-// --- ROUTES API (Déplacées hors de l'async pour Vercel) ---
-app.use("/api/address", addressRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/cart", cartRouter);
-app.use("/api/order", orderRouter);
-app.use("/api/product", productRouter);
-app.use("/api/rider", riderRouter);
-app.use("/api/seller", sellerRouter);
-app.use("/api/settings", settingsRouter); 
-app.use("/api/user", userRouter);        
-app.use("/api/content", contentRouter);  
-app.use("/api/cms", cmsRouter);          
-app.use("/api/chat", chatRouter);        
-app.use("/api/payout", payoutRouter);    
+    // 4. Broker Rider Arrivals to the destination party
+    socket.on("rider_arrived", ({ orderId, targetUserId, type }) => {
+        console.log(`🎯 Rider Arrived! Notifying ${type}: ${targetUserId} for order ${orderId}`);
+        socket.to(targetUserId).emit("push_notification", 
+            type === "pickup" 
+                ? `🚲 Your rider has arrived at your store for order #${orderId.slice(-6).toUpperCase()}`
+                : `📦 Your delivery has arrived! Your rider is outside.`
+        );
+    });
 
-app.get("/", (req, res) => {
-  res.status(200).json({ success: true, message: "Horizon business API is active." });
+    socket.on("disconnect", () => {
+        console.log(`🔌 Connection Dropped: ${socket.id}`);
+    });
 });
 
-// --- GESTION DES ERREURS ---
-app.use((err, req, res, next) => {
-  console.error(`[ERROR]: ${err.message}`);
-  res.status(res.statusCode === 200 ? 500 : res.statusCode).json({
-    success: false,
-    message: err.message,
-  });
-});
-
-// --- INITIALISATION CONNEXIONS ---
 const initializeServer = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`✅ MongoDB Connected`);
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+
     await connectCloudinary();
     console.log(`✅ Cloudinary Ready`);
 
-    if (!isVercel) {
-      httpServer.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-      });
+    app.use(helmet()); 
+    app.use(compression()); 
+    
+    if (process.env.NODE_ENV !== 'production') {
+        app.use(morgan('dev')); 
     }
+
+    app.use(cors({
+      origin: allowedOrigins, 
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE"],
+    }));
+
+    app.use("/api/webhooks", webhookRouter); 
+
+    app.use(express.json({ limit: '2mb' })); 
+    app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+    app.use(cookieParser());
+
+    // 🟢 RATE LIMITER COMPLETELY REMOVED HERE 
+    // You now have unlimited API requests for development!
+
+    app.use(checkMaintenance);
+
+    // API ROUTES
+    app.use("/api/address", addressRouter);
+    app.use("/api/admin", adminRouter);
+    app.use("/api/cart", cartRouter);
+    app.use("/api/order", orderRouter);
+    app.use("/api/product", productRouter);
+    app.use("/api/rider", riderRouter);
+    app.use("/api/seller", sellerRouter);
+    app.use("/api/settings", settingsRouter); 
+    app.use("/api/user", userRouter);        
+    app.use("/api/content", contentRouter);  
+    app.use("/api/cms", cmsRouter);          
+    app.use("/api/chat", chatRouter);        
+    app.use("/api/payout", payoutRouter);    
+
+    app.get("/", (req, res) => {
+      res.status(200).json({ success: true, message: "🌿 Horizon  API is active." });
+    });
+
+    app.use((err, req, res, next) => {
+      console.error(`[ERROR]: ${err.message}`);
+      res.status(res.statusCode === 200 ? 500 : res.statusCode).json({
+        success: false,
+        message: err.message,
+      });
+    });
+
+    // Listen using the HTTP server, NOT the Express app, so Sockets work!
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 Real-Time Server running on port ${PORT}`);
+    });
+
   } catch (error) {
-    console.error(`❌ FATAL: ${error.message}`);
+    console.error(`❌ FATAL: Server Initialization Failed: ${error.message}`);
+    process.exit(1);
   }
 };
 
 initializeServer();
-
-// Important : Export par défaut pour Vercel
-export default app;
