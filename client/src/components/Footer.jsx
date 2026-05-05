@@ -113,7 +113,7 @@ const Footer = () => {
                   />
                 </div>
                 <span className="mt-1.5 group-hover:text-emerald-600 transition-colors">
-                  contact@kuakumarket.com
+                  contact@horizonbusiness.com
                 </span>
               </li>
               <li className="flex items-start gap-3 text-slate-500 text-sm font-medium group cursor-pointer">
@@ -135,7 +135,7 @@ const Footer = () => {
         <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-slate-500 text-sm font-medium text-center md:text-left">
             © {new Date().getFullYear()}{" "}
-            <span className="font-black text-slate-800">Kuaku Market</span>.
+            <span className="font-black text-slate-800">Horizon Buziness</span>.
             Tous droits réservés.
           </p>
 

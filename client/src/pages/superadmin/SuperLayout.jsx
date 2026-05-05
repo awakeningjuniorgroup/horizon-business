@@ -77,7 +77,7 @@ const SuperLayout = () => {
             </button>
           </div>
           <h2 className="text-2xl font-black text-white tracking-tight drop-shadow-md mt-1">
-            Kuaku Market <span className="text-purple-500">OS</span>
+            Horizon business <span className="text-purple-500">OS</span>
           </h2>
         </div>
 
