@@ -46,6 +46,7 @@ const httpServer = createServer(app);
 const allowedOrigins = [
   "http://localhost:5173", 
   "https://horizon-business-1.onrender.com", 
+  "https://horizon-business.vercel.app"
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
