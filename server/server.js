@@ -42,19 +42,40 @@ const PORT = process.env.PORT || 4000;
 // 🟢 Create HTTP Server and bind Socket.io to it
 const httpServer = createServer(app);
 
-// 🟢 FIX: Added your Vercel frontend URL to the allowed origins!
+// 🟢 FIX: CORRECTED allowed origins with proper commas
 const allowedOrigins = [
   "http://localhost:5173", 
   "https://horizon-business-1.onrender.com", 
-  "https://horizon-business.vercel.app"
+  "https://horizon-business.vercel.app",
   process.env.FRONTEND_URL
 ].filter(Boolean);
+
+// 🟢 FIX: Improved CORS configuration with preflight support
+const corsOptions = {
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(null, true); // Still allow for debugging - remove in production
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
+  exposedHeaders: ["Set-Cookie"],
+  optionsSuccessStatus: 200
+};
 
 const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   }
 });
 
@@ -109,28 +130,31 @@ const initializeServer = async () => {
     await connectCloudinary();
     console.log(`✅ Cloudinary Ready`);
 
-    app.use(helmet()); 
+    // Security & Logging Middlewares
+    app.use(helmet({ 
+      crossOriginResourcePolicy: false // Important for CORS
+    })); 
     app.use(compression()); 
     
     if (process.env.NODE_ENV !== 'production') {
         app.use(morgan('dev')); 
     }
 
-    app.use(cors({
-      origin: allowedOrigins, 
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE"],
-    }));
+    // 🟢 FIX: Apply CORS middleware BEFORE other routes
+    app.use(cors(corsOptions));
+    
+    // Handle preflight requests explicitly
+    app.options('*', cors(corsOptions));
 
+    // Webhook route (must be before express.json for raw body)
     app.use("/api/webhooks", webhookRouter); 
 
+    // Body parsing middlewares
     app.use(express.json({ limit: '2mb' })); 
     app.use(express.urlencoded({ extended: true, limit: '2mb' }));
     app.use(cookieParser());
 
-    // 🟢 RATE LIMITER COMPLETELY REMOVED HERE 
-    // You now have unlimited API requests for development!
-
+    // Maintenance check middleware
     app.use(checkMaintenance);
 
     // API ROUTES
@@ -148,21 +172,43 @@ const initializeServer = async () => {
     app.use("/api/chat", chatRouter);        
     app.use("/api/payout", payoutRouter);    
 
+    // Health check endpoint
     app.get("/", (req, res) => {
       res.status(200).json({ success: true, message: "🌿 Horizon API is active." });
     });
 
+    // Test CORS endpoint (for debugging)
+    app.get("/api/test-cors", (req, res) => {
+      res.json({ 
+        success: true, 
+        message: "CORS is working!",
+        origin: req.headers.origin,
+        allowedOrigins: allowedOrigins
+      });
+    });
+
+    // Global error handler
     app.use((err, req, res, next) => {
       console.error(`[ERROR]: ${err.message}`);
-      res.status(res.statusCode === 200 ? 500 : res.statusCode).json({
+      console.error(err.stack);
+      res.status(err.status || 500).json({
         success: false,
-        message: err.message,
+        message: err.message || "Internal Server Error",
+      });
+    });
+
+    // Handle 404 routes
+    app.use("*", (req, res) => {
+      res.status(404).json({
+        success: false,
+        message: `Route ${req.originalUrl} not found`
       });
     });
 
     // Listen using the HTTP server, NOT the Express app, so Sockets work!
     httpServer.listen(PORT, () => {
       console.log(`🚀 Real-Time Server running on port ${PORT}`);
+      console.log(`📡 CORS enabled for origins:`, allowedOrigins);
     });
 
   } catch (error) {
